@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catalogue — PhoneStore</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">📱</div>
+        PhoneStore
+      </a>
+      <nav class="nav">
+        <a href="index.html">Accueil</a>
+        <a href="catalogue.html" class="active">Catalogue</a>
+        <a href="catalogue.html?category=premium">Premium</a>
+        <a href="catalogue.html?category=budget">Budget</a>
+      </nav>
+      <div class="header-actions">
+        <a href="panier.html" class="cart-btn">
+          🛒 Panier
+          <span class="cart-badge">0</span>
+        </a>
+        <button class="menu-toggle" aria-label="Menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">Accueil</a>
+      <span>/</span>
+      Catalogue
+    </div>
+  </div>
+
+  <section class="section" style="padding-top:0">
+    <div class="container">
+      <div class="catalog-layout">
+        <aside class="filters">
+          <input type="text" class="search-box" id="search" placeholder="Rechercher un téléphone...">
+
+          <h3>Catégorie</h3>
+          <div class="filter-group" id="category-filters">
+            <label><input type="radio" name="category" value="all" checked> Tous</label>
+            <label><input type="radio" name="category" value="premium"> Premium</label>
+            <label><input type="radio" name="category" value="milieu"> Milieu de gamme</label>
+            <label><input type="radio" name="category" value="budget"> Budget</label>
+          </div>
+
+          <h3>Marque</h3>
+          <div class="filter-group" id="brand-filters">
+            <label><input type="checkbox" value="Apple" checked> Apple</label>
+            <label><input type="checkbox" value="Samsung" checked> Samsung</label>
+            <label><input type="checkbox" value="Google" checked> Google</label>
+            <label><input type="checkbox" value="Xiaomi" checked> Xiaomi</label>
+            <label><input type="checkbox" value="OnePlus" checked> OnePlus</label>
+            <label><input type="checkbox" value="Nothing" checked> Nothing</label>
+          </div>
+
+          <h3>Disponibilité</h3>
+          <div class="filter-group">
+            <label><input type="checkbox" id="in-stock-only"> En stock uniquement</label>
+          </div>
+        </aside>
+
+        <div>
+          <div class="catalog-toolbar">
+            <span class="results-count" id="results-count"></span>
+            <select class="sort-select" id="sort">
+              <option value="default">Tri par défaut</option>
+              <option value="price-asc">Prix croissant</option>
+              <option value="price-desc">Prix décroissant</option>
+              <option value="rating">Meilleures notes</option>
+              <option value="name">Nom A-Z</option>
+            </select>
+          </div>
+          <div class="products-grid" id="products-grid"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        © 2026 PhoneStore — Tous droits réservés
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function getSelectedBrands() {
+      return [...document.querySelectorAll('#brand-filters input:checked')].map(cb => cb.value);
+    }
+
+    function getSelectedCategory() {
+      return document.querySelector('#category-filters input:checked')?.value || 'all';
+    }
+
+    function filterProducts() {
+      const search = document.getElementById('search').value.toLowerCase();
+      const category = getSelectedCategory();
+      const brands = getSelectedBrands();
+      const inStockOnly = document.getElementById('in-stock-only').checked;
+      const sort = document.getElementById('sort').value;
+
+      let filtered = PRODUCTS.filter(p => {
+        const matchSearch = p.name.toLowerCase().includes(search) ||
+          p.brand.toLowerCase().includes(search);
+        const matchCategory = category === 'all' || p.category === category;
+        const matchBrand = brands.includes(p.brand);
+        const matchStock = !inStockOnly || p.inStock;
+        return matchSearch && matchCategory && matchBrand && matchStock;
+      });
+
+      switch (sort) {
+        case 'price-asc': filtered.sort((a, b) => a.price - b.price); break;
+        case 'price-desc': filtered.sort((a, b) => b.price - a.price); break;
+        case 'rating': filtered.sort((a, b) => b.rating - a.rating); break;
+        case 'name': filtered.sort((a, b) => a.name.localeCompare(b.name)); break;
+      }
+
+      const grid = document.getElementById('products-grid');
+      grid.innerHTML = '';
+      filtered.forEach(p => grid.appendChild(createProductCard(p)));
+
+      document.getElementById('results-count').textContent =
+        `${filtered.length} produit${filtered.length > 1 ? 's' : ''} trouvé${filtered.length > 1 ? 's' : ''}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlCategory = getUrlParam('category');
+      if (urlCategory) {
+        const radio = document.querySelector(`#category-filters input[value="${urlCategory}"]`);
+        if (radio) radio.checked = true;
+      }
+
+      document.getElementById('search').addEventListener('input', filterProducts);
+      document.querySelectorAll('#category-filters input, #brand-filters input, #in-stock-only').forEach(el => {
+        el.addEventListener('change', filterProducts);
+      });
+      document.getElementById('sort').addEventListener('change', filterProducts);
+
+      filterProducts();
+    });
+  </script>
+</body>
+</html>
